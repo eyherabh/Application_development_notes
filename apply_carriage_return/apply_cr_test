@@ -1,0 +1,49 @@
+#!/bin/bash -
+
+declare -A test_str=(
+    [1]=1
+    [123]=123
+    [1\\r4]=4
+    [12\\r4]=42
+    [1\\r45]=45
+    [12\\r45]=45
+    [123\\r45]=453
+    [12\\r456]=456
+    [1\\rAB\\r45]=45
+    [12\\rAB\\r45]=45
+    [123\\rAB\\r45]=453
+    [12\\rAB\\r456]=456
+    [1\\rABC\\r45]=45C
+    [12\\rABC\\r45]=45C
+    [123\\rABC\\r45]=45C
+    [12\\rABC\\r456]=456
+)
+
+[ $# -eq 1 ] || {
+    cat <<EOF
+USAGE
+
+    ${BASHSOURCE##*/} <filename
+
+where <filename> is the name of one of the scripts to apply the carriage-return.
+EOF
+    exit 1
+}
+
+pgen() { printf "%s\n" "$(date -uIns) | $1: $2"; }
+fail() { pgen ERROR "$1" >&2; exit 1; }
+warn() { pgen WARNING "$1" >&2; }
+    
+apply_cr_name=$1
+crvec=$'\r\r\r\r\r'
+for t in "${!test_str[@]}"; do
+    for pre in {0..4}; do
+        for suf in {0..4}; do
+            tnow=${crvec::$pre}$t${crvec::$suf}
+            res=$(printf "$tnow" | "$apply_cr_name") || warn "Cannot run '$apply_cr_name' with string '$tnow'"
+            [ "$res" = "${test_str[$t]}" ] || warn "When running '$apply_cr_name' with string '$tnow', expected '${test_str[$t]}' but got '$res'"
+        done
+    done
+done
+
+

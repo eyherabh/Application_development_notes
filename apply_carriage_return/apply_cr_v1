@@ -1,0 +1,14 @@
+#!/usr/bin/sed -Ef
+:y
+# No need to do anything if no '\r' is found
+/\r/ {
+# Start processing the first two segments. Use '\n' as marks. 
+s/^([^\r]*)\r+/\n\1\n/
+# Overwriting one character at a time
+:x
+s/\n([^\n])([^\n]*)\n([^\r])/\3\n\2\n/
+tx
+# Removing marks and appending to the first segment any characters left in the second.
+s/\n//
+s/\n//
+ty }
